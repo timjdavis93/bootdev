@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	//	"net/http"
+	"github.com/timjdavis93/bootdev/pokedexCLI/pokeAPI"
 	"os"
 	"strings"
 )
@@ -11,6 +13,11 @@ var cliCommands map[string]cliCommand
 
 func main() {
 	//bufio.Scanner <- os.Stdin
+	conf := &config{
+		commands: cliCommands,
+		baseUrl:  "https://pokeapi.co",
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 	cliCommands = map[string]cliCommand{
 		"help": {
@@ -38,7 +45,7 @@ func main() {
 			fmt.Println("Not a command!")
 			continue
 		}
-		command.callback()
+		command.callback(conf)
 
 	}
 }
@@ -46,7 +53,12 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
+}
+
+type config struct {
+	commands map[string]cliCommand
+	baseUrl  string
 }
 
 func cleanInput(text string) []string {
@@ -56,14 +68,14 @@ func cleanInput(text string) []string {
 	return s
 }
 
-func commandExit() error {
+func commandExit(conf *config) error {
 
 	fmt.Println("Closing the Pokedex... Goodbye!\n")
 	defer os.Exit(0)
-	return fmt.Errorf("Closing the Pokedex... Goodbye!\n")
+	return nil
 }
 
-func commandHelp() error {
+func commandHelp(conf *config) error {
 
 	if cliCommands == nil {
 		return fmt.Errorf("No commands!\n")
