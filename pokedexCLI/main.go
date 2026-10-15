@@ -3,19 +3,26 @@ package main
 import (
 	"bufio"
 	"fmt"
-	//	"net/http"
-	"github.com/tjdavis93/bootdev/pokedexCLI/pokeAPI"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/timjdavis93/bootdev/pokedexCLI/pokeAPI"
+	//"github.com/timjdavis93/bootdev/pokedexCLI/pokecache"
 )
 
 var cliCommands map[string]cliCommand
 
 func main() {
+	const cacheInterval = 5 * time.Minute
+	const httpTimeout = 5 & time.Second
+
+	apiClient := pokeAPI.NewClient(httpTimeout, cacheInterval)
+
 	//bufio.Scanner <- os.Stdin
 	conf := &config{
 		commands: cliCommands,
-		nextURL:  "https://pokeapi.co/api/v2/location-area/?limit=20&offset=0",
+		nextURL:  "https://pokeAPI.co/api/v2/location-area/?limit=20&offset=0",
 		prevURL:  "",
 	}
 
@@ -42,7 +49,6 @@ func main() {
 		},
 	}
 
-	// NOTE: Leaving this closer to the loop to make it clear what I might need next time I make a CLI
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex >")
@@ -57,7 +63,7 @@ func main() {
 			fmt.Println("Not a command!")
 			continue
 		}
-		command.callback(conf)
+		command.callback(conf, apiClient)
 
 	}
 }
@@ -65,7 +71,7 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *pokeAPI.Client) error
 }
 
 type config struct {
@@ -81,39 +87,44 @@ func cleanInput(text string) []string {
 	return s
 }
 
-func commandExit(conf *config) error {
+func commandExit(conf *config, apiClient *pokeAPI.Client) error {
 
-	fmt.Println("Closing the Pokedex... Goodbye!\n")
+	fmt.Println("Closing the Pokedex... Goodbye!")
 	defer os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config) error {
+func commandHelp(conf *config, apiClient *pokeAPI.Client) error {
 
 	if cliCommands == nil {
 		return fmt.Errorf("No commands!\n")
 	}
+
 	if len(cliCommands) == 0 {
 		return fmt.Errorf("No commands!\n")
 	}
+
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println("")
+
 	for _, commands := range cliCommands {
 		fmt.Printf("%s: %s\n", commands.name, commands.description)
 	}
+
 	return nil
 }
 
-func commandMap(conf *config) error {
-	//url := "https://pokeapi.co/api/v2/location-area/?limit=20"
+func commandMap(conf *config, apiClient *pokeAPI.Client) error {
+	//url := "https://pokeAPI.co/api/v2/location-area/?limit=20"
 	url := conf.nextURL
 
-	loc, err := pokeAPI.GetMap(url)
+	loc, err := apiClient.GetMap(url)
 	if err != nil {
 		fmt.Println("Error GetMap API")
 		return err
 	}
+
 	for _, locations := range loc.Results {
 		fmt.Println(locations.Name)
 	}
@@ -123,11 +134,11 @@ func commandMap(conf *config) error {
 	return nil
 }
 
-func commandMapb(conf *config) error {
-	//url := "https://pokeapi.co/api/v2/location-area/?limit=20"
+func commandMapb(conf *config, apiClient *pokeAPI.Client) error {
+	//url := "https://pokeAPI.co/api/v2/location-area/?limit=20"
 	url := conf.prevURL
 
-	loc, err := pokeAPI.GetMap(url)
+	loc, err := apiClient.GetMap(url)
 	if err != nil {
 		fmt.Println("Error GetMap API")
 		return err

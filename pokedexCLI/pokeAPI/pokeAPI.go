@@ -6,23 +6,28 @@ import (
 	"net/http"
 )
 
-func GetMap(url string) (Location, error) {
-	//default returns ?limit=20 can also ?offset=## to get a different page
-	//url := "https://pokeapi.co/api/v2/location/" // https://pokeapi.co/api/v2/location/{id or name}/
+func (c *Client) GetMap(url string) (Location, error) {
+
+	var loc Location
+	data, ok := c.cache.Get(url)
+	if ok {
+		if err := json.Unmarshal(data, &loc); err != nil {
+			return Location{}, err
+		}
+		return loc, nil
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return Location{}, err
 	}
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return Location{}, err
 	}
 	defer res.Body.Close()
 
-	var loc Location
 	decoder := json.NewDecoder(res.Body)
 	err = decoder.Decode(&loc)
 	if err != nil {
