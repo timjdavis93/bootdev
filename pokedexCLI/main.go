@@ -13,6 +13,18 @@ import (
 
 var cliCommands map[string]cliCommand
 
+// Define ANSI color codes
+const (
+	Reset  = "\033[0m"
+	Red    = "\033[31m"
+	Green  = "\033[32m"
+	Yellow = "\033[33m"
+	Blue   = "\033[34m"
+	Purple = "\033[35m"
+	Cyan   = "\033[36m"
+	White  = "\033[37m"
+)
+
 func main() {
 	const cacheInterval = 5 * time.Minute
 	const httpTimeout = 5 & time.Second
@@ -22,6 +34,7 @@ func main() {
 	//bufio.Scanner <- os.Stdin
 	conf := &config{
 		commands: cliCommands,
+		baseURL:  "https://pokeAPI.co/api/v2/location-area/",
 		nextURL:  "https://pokeAPI.co/api/v2/location-area/?limit=20&offset=0",
 		prevURL:  "",
 	}
@@ -37,6 +50,16 @@ func main() {
 			description: "map... the other way... b wards",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "explore <city name> to look at an area",
+			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "catch things",
+			callback:    commandCatch,
+		},
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
@@ -51,7 +74,7 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("Pokedex >")
+		fmt.Print(Red + "Pokedex >" + Reset)
 		scanner.Scan()
 		text := scanner.Text()
 		tmp := cleanInput(text)
@@ -63,7 +86,7 @@ func main() {
 			fmt.Println("Not a command!")
 			continue
 		}
-		command.callback(conf, apiClient)
+		command.callback(conf, apiClient, tmp[1:])
 
 	}
 }
@@ -71,11 +94,12 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config, *pokeAPI.Client) error
+	callback    func(*config, *pokeAPI.Client, []string) error
 }
 
 type config struct {
 	commands map[string]cliCommand
+	baseURL  string
 	nextURL  string
 	prevURL  string
 }
@@ -87,25 +111,25 @@ func cleanInput(text string) []string {
 	return s
 }
 
-func commandExit(conf *config, apiClient *pokeAPI.Client) error {
+func commandExit(conf *config, apiClient *pokeAPI.Client, args []string) error {
 
-	fmt.Println("Closing the Pokedex... Goodbye!")
+	fmt.Println(Red + "Closing the Pokedex... Goodbye!" + Reset)
 	defer os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config, apiClient *pokeAPI.Client) error {
+func commandHelp(conf *config, apiClient *pokeAPI.Client, args []string) error {
 
 	if cliCommands == nil {
-		return fmt.Errorf("No commands!\n")
+		return fmt.Errorf(Red + "No commands!\n" + Reset)
 	}
 
 	if len(cliCommands) == 0 {
 		return fmt.Errorf("No commands!\n")
 	}
 
-	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:")
+	fmt.Println(White + "Welcome to the Pokedex!")
+	fmt.Println("Usage:" + Reset)
 	fmt.Println("")
 
 	for _, commands := range cliCommands {
@@ -115,7 +139,7 @@ func commandHelp(conf *config, apiClient *pokeAPI.Client) error {
 	return nil
 }
 
-func commandMap(conf *config, apiClient *pokeAPI.Client) error {
+func commandMap(conf *config, apiClient *pokeAPI.Client, args []string) error {
 	//url := "https://pokeAPI.co/api/v2/location-area/?limit=20"
 	url := conf.nextURL
 
@@ -134,7 +158,7 @@ func commandMap(conf *config, apiClient *pokeAPI.Client) error {
 	return nil
 }
 
-func commandMapb(conf *config, apiClient *pokeAPI.Client) error {
+func commandMapb(conf *config, apiClient *pokeAPI.Client, args []string) error {
 	//url := "https://pokeAPI.co/api/v2/location-area/?limit=20"
 	url := conf.prevURL
 
@@ -149,5 +173,51 @@ func commandMapb(conf *config, apiClient *pokeAPI.Client) error {
 
 	conf.nextURL = loc.Next
 	conf.prevURL = loc.Previous
+	return nil
+}
+
+func commandExplore(conf *config, apiClient *pokeAPI.Client, args []string) error {
+	//url := "https://pokeAPI.co/api/v2/location-area/" + "area name"
+
+	if len(args) == 0 {
+		fmt.Println("No location to explore")
+		return nil
+	}
+	areaName := args[0]
+	url := conf.baseURL + areaName
+
+	area, err := apiClient.GetArea(url)
+	if err != nil {
+		fmt.Println("Error GetMap API")
+		return err
+	}
+	// TODO: Need to cache the found pokemon so that I can tag them as "found" before allowing catch
+	fmt.Println(White + "Exploring: " + areaName)
+	fmt.Println("Found Pokemon: ")
+	for _, encounters := range area.PokemonEncounters {
+		fmt.Println(" - " + encounters.Pokemon.Name)
+	}
+	fmt.Println(Reset)
+
+	return nil
+}
+
+func commandCatch(conf *config, apiClient *pokeAPI.Client, args []string) error {
+
+	if len(args) == 0 {
+		fmt.Println("No Pokemon named")
+	}
+
+	pokemonName := args[0]
+	url := conf.baseURL + pokemonName
+
+	pokemon, err := apiClient.GetPokemon(url)
+	if err != nil {
+		fmt.Println("Error GetPokemon API")
+		return err
+	}
+
+	fmt.Println(pokemon.Name)
+
 	return nil
 }

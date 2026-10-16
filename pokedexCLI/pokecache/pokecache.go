@@ -8,6 +8,7 @@ import (
 
 type Cache struct {
 	cacheEntry map[string]cacheEntry
+	pokedex    map[string]cacheEntry
 	mu         *sync.RWMutex
 }
 
@@ -20,6 +21,7 @@ func NewCache(interval time.Duration) *Cache {
 
 	var c = Cache{
 		cacheEntry: make(map[string]cacheEntry),
+		pokedex:    make(map[string]cacheEntry),
 		mu:         &sync.RWMutex{},
 	}
 
