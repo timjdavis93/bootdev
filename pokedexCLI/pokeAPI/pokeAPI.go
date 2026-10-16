@@ -105,6 +105,12 @@ func (c *Client) fetchAndCache(url string) ([]byte, error) {
 		fmt.Println("c.httpClient.Do(req) failed")
 		return []byte{}, err
 	}
+
+	if res.StatusCode != http.StatusOK {
+		fmt.Printf("Status code error %d for %s\n", res.StatusCode, url)
+		return nil, fmt.Errorf("unexpected status %d for %s", res.StatusCode, url)
+	}
+
 	defer res.Body.Close()
 
 	data, err := io.ReadAll(res.Body)

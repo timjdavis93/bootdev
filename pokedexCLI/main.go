@@ -34,11 +34,12 @@ func main() {
 	//bufio.Scanner <- os.Stdin
 	conf := &config{
 		commands: cliCommands,
-		baseURL:  "https://pokeAPI.co/api/v2/location-area/",
+		baseURL:  "https://pokeAPI.co/api/v2/",
 		nextURL:  "https://pokeAPI.co/api/v2/location-area/?limit=20&offset=0",
 		prevURL:  "",
 	}
 
+	// TODO: cliCommands file, read into program?
 	cliCommands = map[string]cliCommand{
 		"map": {
 			name:        "map",
@@ -86,7 +87,9 @@ func main() {
 			fmt.Println("Not a command!")
 			continue
 		}
-		command.callback(conf, apiClient, tmp[1:])
+		if err := command.callback(conf, apiClient, tmp[1:]); err != nil {
+			fmt.Println("Error: ", err)
+		}
 
 	}
 }
@@ -184,7 +187,7 @@ func commandExplore(conf *config, apiClient *pokeAPI.Client, args []string) erro
 		return nil
 	}
 	areaName := args[0]
-	url := conf.baseURL + areaName
+	url := conf.baseURL + "location-area/" + areaName
 
 	area, err := apiClient.GetArea(url)
 	if err != nil {
@@ -209,7 +212,7 @@ func commandCatch(conf *config, apiClient *pokeAPI.Client, args []string) error 
 	}
 
 	pokemonName := args[0]
-	url := conf.baseURL + pokemonName
+	url := conf.baseURL + "pokemon/" + pokemonName
 
 	pokemon, err := apiClient.GetPokemon(url)
 	if err != nil {
