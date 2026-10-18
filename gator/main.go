@@ -3,32 +3,57 @@ package main
 import (
 	"fmt"
 	"github.com/timjdavis93/bootdev/gator/internal/config"
+	"log"
 	"os"
 )
 
+// Define ANSI color codes
+const (
+	Reset  = "\033[0m"
+	Red    = "\033[31m"
+	Green  = "\033[32m"
+	Yellow = "\033[33m"
+	Blue   = "\033[34m"
+	Purple = "\033[35m"
+	Cyan   = "\033[36m"
+	White  = "\033[37m"
+)
+
 func main() {
-	conf, err := config.Read()
+	conf, err := config.ReadConfig()
 	if err != nil {
 		return
 	}
 
-	state := State{
+	programState := State{
 		Config: conf,
 	}
 
-	var cmds map[string]func(*State, Command) error
 	commands := Commands{
-		cmds: cmds,
+		registeredCommands: make(map[string]func(*State, Command) error),
 	}
 
 	commands.register("login", handlerLogin)
 
-	args := os.Args
-	if len(args) < 2 {
-		fmt.Println("Error Args")
-		return
+	if len(os.Args) < 2 {
+		log.Fatal("usage: cli <command> [args...]")
 	}
 
+	cmd := Command{
+		Name: os.Args[1],
+		Args: os.Args[2:],
+	}
+
+	if err := commands.run(&programState, cmd); err != nil {
+		fmt.Println("Failed to run given command")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+}
+
+type State struct {
+	Config *config.Config
 }
 
 /*
@@ -55,9 +80,10 @@ func main() {
 	}
 */
 
+/*
 func cleanInput(text string) []string {
 	var s []string
 	text = strings.ToLower(text)
 	s = strings.Fields(text)
 	return s
-}
+} */

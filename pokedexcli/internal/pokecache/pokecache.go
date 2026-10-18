@@ -13,8 +13,8 @@ type Cache struct {
 }
 
 type cacheEntry struct {
-	createdAt time.Time
 	val       []byte
+	createdAt time.Time
 }
 
 func NewCache(interval time.Duration) *Cache {
@@ -39,8 +39,8 @@ func (c *Cache) Add(key string, val []byte) error {
 	defer c.mu.Unlock()
 
 	c.cacheEntry[key] = cacheEntry{
-		createdAt: time.Now(),
 		val:       val,
+		createdAt: time.Now(),
 	}
 	return nil
 }

@@ -7,23 +7,35 @@ import (
 
 const configFileName = "/.gatorconfig.json"
 
+func getConfigPath() (string, error) {
+
+	home_dir, err := os.UserHomeDir()
+	if err != nil {
+		return "", nil
+	}
+	configFilePath := home_dir + configFileName
+	return configFilePath, nil
+
+}
+
 type Config struct {
 	Db_url            string `json:"db_url"`
 	Current_user_name string `json:"current_user_name"`
 }
 
-func Read() (*Config, error) {
-	home_dir, err := os.UserHomeDir()
+func ReadConfig() (*Config, error) {
+
+	configFilePath, err := getConfigPath()
 	if err != nil {
 		return &Config{}, err
 	}
-	configFilePath := home_dir + configFileName
+
 	configFile, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return &Config{}, err
 	}
 
-	var config Config
+	config := Config{}
 	if err := json.Unmarshal(configFile, &config); err != nil {
 		return &Config{}, err
 	}
@@ -31,20 +43,16 @@ func Read() (*Config, error) {
 	return &config, nil
 }
 
-func SetUser(currentUserName string) error {
-	config, err := Read()
-	if err != nil {
-		return err
-	}
+func (c *Config) SetUser(currentUserName string) error {
 	home_dir, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 	configFilePath := home_dir + configFileName
 
-	config.Current_user_name = currentUserName
+	c.Current_user_name = currentUserName
 
-	data, err := json.Marshal(config)
+	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}

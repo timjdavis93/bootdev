@@ -48,7 +48,7 @@ func TestReapLoop(t *testing.T) {
 
 	_, ok := cache.Get("https://example.com")
 	if !ok {
-		t.Errorf("expected to find key")
+		t.Errorf("expected to find key, add not working")
 		return
 	}
 
@@ -56,7 +56,7 @@ func TestReapLoop(t *testing.T) {
 
 	_, ok = cache.Get("https://example.com")
 	if ok {
-		t.Errorf("expected to not find key")
+		t.Errorf("expected to not find key, reaping loop not working")
 		return
 	}
 }

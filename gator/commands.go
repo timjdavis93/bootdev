@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"github.com/timjdavis93/bootdev/gator/internal/config"
+	"errors"
+	//	"fmt"
+	// "github.com/timjdavis93/bootdev/gator/internal/config"
 )
 
 type Command struct {
@@ -11,31 +12,19 @@ type Command struct {
 }
 
 type Commands struct {
-	cmds map[string]func(*State, Command) error
-}
-
-type State struct {
-	Config *config.Config
-}
-
-func handlerLogin(s *State, cmd Command) error {
-
-	if len(cmd.Args) == 0 {
-		return fmt.Errorf("Args Error")
-	}
-
-	s.Config.Current_user_name = cmd.Args[0]
-	fmt.Println("Username Set")
-
-	return nil
+	registeredCommands map[string]func(*State, Command) error
 }
 
 // Runs a given command with the provided state if it exists
 func (c *Commands) run(s *State, cmd Command) error {
-	return nil
+	f, ok := c.registeredCommands[cmd.Name]
+	if !ok {
+		return errors.New("command not found")
+	}
+	return f(s, cmd)
 }
 
 // registers a new handler function for a command name
-func (c *Commands) register(name string, f func(*State, Command) error) error {
-	return nil
+func (c *Commands) register(name string, f func(*State, Command) error) {
+	c.registeredCommands[name] = f
 }
