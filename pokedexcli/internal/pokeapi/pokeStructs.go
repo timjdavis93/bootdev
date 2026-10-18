@@ -1,11 +1,11 @@
-package pokeAPI
+package pokeapi
 
 import (
 	"net/http"
 	"time"
 )
 
-import "github.com/timjdavis93/bootdev/pokedexCLI/pokecache"
+import "github.com/timjdavis93/bootdev/pokedexcli/internal/pokecache"
 
 type Client struct {
 	httpClient http.Client
@@ -20,9 +20,9 @@ func NewClient(httpTimeout, cacheInterval time.Duration) *Client {
 }
 
 type Location struct {
-	Count    int    `json:"count"`
-	Next     string `json:"next"`
-	Previous string `json:"previous"`
+	Count    int     `json:"count"`
+	Next     *string `json:"next"`
+	Previous *string `json:"previous"`
 	Results  []struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
