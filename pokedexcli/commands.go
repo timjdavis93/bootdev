@@ -41,9 +41,9 @@ func getCommands() map[string]cliCommand {
 	}
 }
 
-func commandMap(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandMap(cfg *config, apiClient *pokeapi.Client, args []string) error {
 	//url := "https://pokeapi.co/api/v2/location-area/?limit=20"
-	url := *conf.nextURL
+	url := cfg.nextURL
 
 	loc, err := apiClient.GetMap(url)
 	if err != nil {
@@ -55,14 +55,14 @@ func commandMap(conf *config, apiClient *pokeapi.Client, args []string) error {
 		fmt.Println(locations.Name)
 	}
 
-	conf.nextURL = loc.Next
-	conf.prevURL = loc.Previous
+	cfg.nextURL = loc.Next
+	cfg.prevURL = loc.Previous
 	return nil
 }
 
-func commandMapb(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandMapb(cfg *config, apiClient *pokeapi.Client, args []string) error {
 	//url := "https://pokeapi.co/api/v2/location-area/?limit=20"
-	url := *conf.prevURL
+	url := cfg.prevURL
 
 	loc, err := apiClient.GetMap(url)
 	if err != nil {
@@ -73,12 +73,12 @@ func commandMapb(conf *config, apiClient *pokeapi.Client, args []string) error {
 		fmt.Println(locations.Name)
 	}
 
-	conf.nextURL = loc.Next
-	conf.prevURL = loc.Previous
+	cfg.nextURL = loc.Next
+	cfg.prevURL = loc.Previous
 	return nil
 }
 
-func commandExplore(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandExplore(cfg *config, apiClient *pokeapi.Client, args []string) error {
 	//url := "https://pokeapi.co/api/v2/location-area/" + "area name"
 
 	if len(args) == 0 {
@@ -86,9 +86,9 @@ func commandExplore(conf *config, apiClient *pokeapi.Client, args []string) erro
 		return nil
 	}
 	areaName := args[0]
-	url := *conf.baseURL + "location-area/" + areaName
+	url := *cfg.baseURL + "location-area/" + areaName
 
-	area, err := apiClient.GetArea(url)
+	area, err := apiClient.GetArea(&url)
 	if err != nil {
 		fmt.Println("Error GetMap API")
 		return err
@@ -104,16 +104,16 @@ func commandExplore(conf *config, apiClient *pokeapi.Client, args []string) erro
 	return nil
 }
 
-func commandCatch(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandCatch(cfg *config, apiClient *pokeapi.Client, args []string) error {
 
 	if len(args) == 0 {
 		fmt.Println("No Pokemon named")
 	}
 
 	pokemonName := args[0]
-	url := *conf.baseURL + "pokemon/" + pokemonName
+	url := *cfg.baseURL + "pokemon/" + pokemonName
 
-	pokemon, err := apiClient.GetPokemon(url)
+	pokemon, err := apiClient.GetPokemon(&url)
 	if err != nil {
 		fmt.Println("Error GetPokemon API")
 		return err
@@ -126,7 +126,7 @@ func commandCatch(conf *config, apiClient *pokeapi.Client, args []string) error 
 	return nil
 }
 
-func commandHelp(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandHelp(cfg *config, apiClient *pokeapi.Client, args []string) error {
 
 	fmt.Println(White + "Welcome to the Pokedex!")
 	fmt.Println("Usage:" + Reset)
@@ -140,7 +140,7 @@ func commandHelp(conf *config, apiClient *pokeapi.Client, args []string) error {
 	return nil
 }
 
-func commandExit(conf *config, apiClient *pokeapi.Client, args []string) error {
+func commandExit(cfg *config, apiClient *pokeapi.Client, args []string) error {
 
 	fmt.Println(Red + "Closing the Pokedex... Goodbye!" + Reset)
 	defer os.Exit(0)

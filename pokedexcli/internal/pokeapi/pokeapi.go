@@ -7,10 +7,13 @@ import (
 	"net/http"
 )
 
-func (c *Client) GetMap(url string) (Location, error) {
+func (c *Client) GetMap(url *string) (Location, error) {
+	if url == nil {
+		return Location{}, fmt.Errorf("No Valid URL")
+	}
 
 	var loc Location
-	data, ok := c.cache.Get(url)
+	data, ok := c.cache.Get(*url)
 	if ok {
 		if err := json.Unmarshal(data, &loc); err != nil {
 			return Location{}, err
@@ -18,7 +21,7 @@ func (c *Client) GetMap(url string) (Location, error) {
 		return loc, nil
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", *url, nil)
 	if err != nil {
 		return Location{}, err
 	}
@@ -38,10 +41,10 @@ func (c *Client) GetMap(url string) (Location, error) {
 	return loc, nil
 }
 
-func (c *Client) GetArea(url string) (Area, error) {
+func (c *Client) GetArea(url *string) (Area, error) {
 
 	var loc Area
-	data, ok := c.cache.Get(url)
+	data, ok := c.cache.Get(*url)
 	if ok {
 		if err := json.Unmarshal(data, &loc); err != nil {
 			return Area{}, err
@@ -49,7 +52,7 @@ func (c *Client) GetArea(url string) (Area, error) {
 		return loc, nil
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", *url, nil)
 	if err != nil {
 		return Area{}, err
 	}
@@ -69,7 +72,7 @@ func (c *Client) GetArea(url string) (Area, error) {
 	return loc, nil
 }
 
-func (c *Client) GetPokemon(url string) (Pokemon, error) {
+func (c *Client) GetPokemon(url *string) (Pokemon, error) {
 
 	var pokemon Pokemon
 	data, err := c.fetchAndCache(url)
@@ -87,14 +90,14 @@ func (c *Client) GetPokemon(url string) (Pokemon, error) {
 
 }
 
-func (c *Client) fetchAndCache(url string) ([]byte, error) {
+func (c *Client) fetchAndCache(url *string) ([]byte, error) {
 
-	if data, ok := c.cache.Get(url); ok {
+	if data, ok := c.cache.Get(*url); ok {
 		fmt.Println("Pokemon-data found in cache")
 		return data, nil
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", *url, nil)
 	if err != nil {
 		fmt.Println("Http.NewRequest failed")
 		return []byte{}, err
@@ -107,8 +110,8 @@ func (c *Client) fetchAndCache(url string) ([]byte, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		fmt.Printf("Status code error %d for %s\n", res.StatusCode, url)
-		return nil, fmt.Errorf("unexpected status %d for %s", res.StatusCode, url)
+		fmt.Printf("Status code error %d for %s\n", res.StatusCode, *url)
+		return nil, fmt.Errorf("unexpected status %d for %s", res.StatusCode, *url)
 	}
 
 	defer res.Body.Close()
@@ -119,7 +122,7 @@ func (c *Client) fetchAndCache(url string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	c.cache.Add(url, data)
+	c.cache.Add(*url, data)
 
 	fmt.Println("data found online")
 	return data, nil
